@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Génération d'Exercices</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="container mx-auto my-10">
+    <h1 class="text-center text-3xl font-semibold mb-6">Génération d’Exercices et Quiz</h1>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <form id="quiz-form">
+            <div class="mb-4">
+                <label for="exercise-count" class="block text-sm font-medium text-gray-700">Nombre d’exercices</label>
+                <input type="number" id="exercise-count" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" min="1" placeholder="Exemple : 5" required>
+            </div>
+            <div class="mb-4">
+                <label for="difficulty-level" class="block text-sm font-medium text-gray-700">Difficulté</label>
+                <select id="difficulty-level" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500">
+                    <option value="Débutant">Débutant</option>
+                    <option value="Intermédiaire">Intermédiaire</option>
+                    <option value="Avancé">Avancé</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="exercise-subject" class="block text-sm font-medium text-gray-700">Sujet</label>
+                <input type="text" id="exercise-subject" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" placeholder="Exemple : Mathématiques, Physique..." required>
+            </div>
+            <div class="mb-4">
+                <label for="exercise-description" class="block text-sm font-medium text-gray-700">Description ou Détails</label>
+                <textarea id="exercise-description" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" rows="4" placeholder="Décrivez les exercices souhaités. Exemple : Ajouter des questions de géométrie, inclure des formules, etc." required></textarea>
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Générer</button>
+        </form>
+        <div id="exercise-output" class="mt-6 hidden">
+            <h2 class="text-xl font-bold mb-4">Exercices générés</h2>
+            <ul id="exercise-list" class="list-disc pl-5">
+                <!-- Contenu généré -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizForm = document.getElementById("quiz-form");
+    const exerciseOutput = document.getElementById("exercise-output");
+    const exerciseList = document.getElementById("exercise-list");
+    const API_KEY = ''; // Remplacez par votre clé API OpenAI
+
+    // Gestion du formulaire
+    quizForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const exerciseCount = document.getElementById("exercise-count").value.trim();
+        const difficulty = document.getElementById("difficulty-level").value;
+        const subject = document.getElementById("exercise-subject").value.trim();
+        const description = document.getElementById("exercise-description").value.trim();
+
+        if (!exerciseCount || exerciseCount <= 0 || !subject || !description) {
+            alert("Veuillez remplir tous les champs correctement.");
+            return;
+        }
+
+        exerciseList.innerHTML = "<li class='text-gray-400'>Chargement des exercices...</li>";
+
+        // Appel à l'API pour générer des exercices
+        fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4",
+                messages: [
+                    {
+                        role: "system",
+                        content: "Tu es une IA qui génère des exercices éducatifs clairs et adaptés selon les besoins de l'utilisateur."
+                    },
+                    {
+                        role: "user",
+                        content: `Génère ${exerciseCount} exercices pour le sujet "${subject}" avec un niveau de difficulté "${difficulty}". Détails : ${description}.`
+                    }
+                ]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const exercises = data.choices[0].message.content.split("\n").filter(e => e.trim() !== "");
+            exerciseList.innerHTML = "";
+            exercises.forEach((exercise, index) => {
+                const li = document.createElement("li");
+                li.innerHTML = `<strong>Exercice ${index + 1} :</strong> ${exercise}`;
+                exerciseList.appendChild(li);
+            });
+
+            exerciseOutput.classList.remove("hidden");
+        })
+        .catch(error => {
+            console.error("Erreur :", error);
+            exerciseList.innerHTML = "<li class='text-red-500'>Erreur lors de la génération des exercices. Veuillez réessayer.</li>";
+        });
+    });
+</script>
+
+</body>
+
+</html>

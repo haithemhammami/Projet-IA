@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Édition du Cours</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="container mx-auto my-10">
+    <h1 class="text-center text-3xl font-semibold mb-6">Édition et Personnalisation</h1>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Cours : <span id="course-title">Chargement...</span></h2>
+        <div id="course-sections">
+            <!-- Sections seront générées dynamiquement ici -->
+        </div>
+        <button id="add-section" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4">Ajouter une nouvelle section</button>
+        <button id="save-changes" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Sauvegarder les modifications</button>
+    </div>
+</div>
+
+<script>
+    // Données fictives initiales (simule une API ou une base de données)
+    let courseData = {
+        id: 1,
+        title: "Introduction à la Programmation",
+        sections: [
+            { id: 1, title: "Introduction", content: "Présentation générale" },
+            { id: 2, title: "Concepts Clés", content: "Exploration des concepts fondamentaux" }
+        ]
+    };
+
+    // Références DOM
+    const courseTitleElement = document.getElementById("course-title");
+    const courseSectionsContainer = document.getElementById("course-sections");
+    const addSectionButton = document.getElementById("add-section");
+    const saveChangesButton = document.getElementById("save-changes");
+
+    // Fonction pour afficher les sections
+    function renderSections() {
+        courseSectionsContainer.innerHTML = ""; // Réinitialiser le conteneur
+        courseData.sections.forEach((section, index) => {
+            const sectionDiv = document.createElement("div");
+            sectionDiv.className = "mb-4";
+            sectionDiv.innerHTML = `
+                <label class="block text-sm font-medium text-gray-700">Section ${index + 1} : ${section.title}</label>
+                <textarea class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500">${section.content}</textarea>
+                <button class="delete-section text-red-500 text-sm mt-1" data-id="${section.id}">Supprimer</button>
+            `;
+            courseSectionsContainer.appendChild(sectionDiv);
+        });
+    }
+
+    // Charger les données du cours
+    function loadCourseData() {
+        courseTitleElement.textContent = courseData.title;
+        renderSections();
+    }
+
+    // Ajouter une nouvelle section
+    addSectionButton.addEventListener("click", () => {
+        const newSectionId = courseData.sections.length ? courseData.sections[courseData.sections.length - 1].id + 1 : 1;
+        courseData.sections.push({ id: newSectionId, title: `Nouvelle Section`, content: "" });
+        renderSections();
+    });
+
+    // Supprimer une section
+    courseSectionsContainer.addEventListener("click", (event) => {
+        if (event.target.classList.contains("delete-section")) {
+            const sectionId = parseInt(event.target.getAttribute("data-id"), 10);
+            courseData.sections = courseData.sections.filter(section => section.id !== sectionId);
+            renderSections();
+        }
+    });
+
+    // Sauvegarder les modifications
+    saveChangesButton.addEventListener("click", () => {
+        const textareas = courseSectionsContainer.querySelectorAll("textarea");
+        textareas.forEach((textarea, index) => {
+            courseData.sections[index].content = textarea.value;
+        });
+
+        // Simulation d'une sauvegarde (ex. envoi vers une API)
+        alert("Modifications sauvegardées !");
+        console.log("Données sauvegardées :", courseData);
+    });
+
+    // Initialisation
+    loadCourseData();
+</script>
+
+</body>
+
+</html>

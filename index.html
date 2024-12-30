@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Gestion des Cours</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="container mx-auto my-10">
+    <h1 class="text-center text-3xl font-semibold mb-4">Gestion Automatique des Cours</h1>
+
+    <!-- Navigation -->
+    <div class="text-center mb-8">
+        <a href="generation.html" class="text-blue-500 hover:underline mx-4">Générer un exercice &rarr;</a>
+        <a href="edition.html" class="text-blue-500 hover:underline mx-4">Modifier un cours &rarr;</a>
+    </div>
+
+    <!-- Formulaire de création -->
+    <div class="md:w-2/3 mx-auto">
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <form id="course-form">
+                <div class="mb-4">
+                    <label for="course-subject" class="block text-sm font-medium text-gray-700">Sujet du cours</label>
+                    <input type="text" id="course-subject" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" placeholder="Exemple : Introduction à la programmation" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="course-difficulty" class="block text-sm font-medium text-gray-700">Niveau de difficulté</label>
+                    <select id="course-difficulty" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500">
+                        <option value="Débutant">Débutant</option>
+                        <option value="Intermédiaire">Intermédiaire</option>
+                        <option value="Avancé">Avancé</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="course-duration" class="block text-sm font-medium text-gray-700">Durée du cours (en heures)</label>
+                    <input type="number" id="course-duration" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" min="1" placeholder="Exemple : 2" required>
+                </div>
+
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Générer le plan de cours
+                </button>
+            </form>
+        </div>
+
+        <!-- Plan généré -->
+        <div class="mt-10 bg-white shadow-md rounded-lg p-6 hidden" id="course-plan">
+            <h2 class="text-xl font-semibold mb-4">Plan de cours généré</h2>
+            <ul id="course-sections" class="list-disc pl-5 space-y-2">
+                <li class="text-gray-400">Le plan de cours apparaîtra ici après la génération</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Liste des cours déjà réalisés -->
+    <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Cours déjà réalisés</h2>
+        <ul id="generated-courses" class="list-disc pl-5 space-y-2 bg-white shadow-md rounded-lg p-6">
+            <li class="text-gray-400">Aucun cours généré pour le moment</li>
+        </ul>
+    </div>
+
+    <!-- Exportation / Importation -->
+    <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Exportation / Importation</h2>
+        <div class="mb-4">
+            <button id="export-course" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Exporter le Cours au format JSON
+            </button>
+        </div>
+        <div class="mb-4">
+            <label for="import-course" class="block text-sm font-medium text-gray-700">Importer un fichier JSON</label>
+            <input type="file" id="import-course" accept=".json" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500">
+        </div>
+        <div id="import-feedback" class="text-green-500 mt-2 hidden">
+            Cours importé avec succès !
+        </div>
+    </div>
+</div>
+
+<script>
+    const courseForm = document.getElementById("course-form");
+    const coursePlanContainer = document.getElementById("course-plan");
+    const courseSectionsList = document.getElementById("course-sections");
+    const generatedCoursesList = document.getElementById("generated-courses");
+    const API_KEY = ''; // Remplace par ta clé API OpenAI
+
+    let generatedCourses = [];
+
+    // Générer un plan de cours
+    courseForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const subject = document.getElementById("course-subject").value.trim();
+        const difficulty = document.getElementById("course-difficulty").value;
+        const duration = document.getElementById("course-duration").value;
+
+        if (!subject || !difficulty || !duration) {
+            alert("Veuillez remplir tous les champs !");
+            return;
+        }
+
+        courseSectionsList.innerHTML = "<li class='text-gray-400'>Chargement...</li>";
+
+        fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4",
+                messages: [
+                    {
+                        role: "system",
+                        content: "Tu es une IA spécialisée en génération de plans de cours. Tu aides les utilisateurs à organiser des formations structurées selon leurs besoins."
+                    },
+                    {
+                        role: "user",
+                        content: `Génère un plan de cours sur le sujet "${subject}" pour un niveau "${difficulty}" avec une durée de ${duration} heures. Inclue une introduction, des concepts clés, et une conclusion.`
+                    }
+                ]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const content = data.choices[0].message.content;
+            const sections = JSON.parse(content).sections;
+
+            courseSectionsList.innerHTML = "";
+            sections.forEach(section => {
+                const li = document.createElement("li");
+                li.innerHTML = `<strong>${section.title}:</strong> ${section.description} <br> <em>Objectifs:</em> ${section.objectives.join(", ")}`;
+                courseSectionsList.appendChild(li);
+            });
+
+            coursePlanContainer.classList.remove("hidden");
+
+            // Ajouter le cours à la liste des cours générés
+            const course = { subject, difficulty, duration, sections };
+            generatedCourses.push(course);
+            updateGeneratedCourses();
+        })
+        .catch(error => {
+            console.error("Erreur:", error);
+            courseSectionsList.innerHTML = "<li class='text-red-500'>Erreur lors de la génération du plan de cours</li>";
+        });
+    });
+
+    // Mettre à jour la liste des cours générés
+    function updateGeneratedCourses() {
+        generatedCoursesList.innerHTML = "";
+        if (generatedCourses.length === 0) {
+            generatedCoursesList.innerHTML = "<li class='text-gray-400'>Aucun cours généré pour le moment</li>";
+        } else {
+            generatedCourses.forEach((course, index) => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <strong>${course.subject} (${course.difficulty})</strong> - ${course.duration}h
+                    <br>
+                    <a href="edition.html?course=${index}" class="text-blue-500 hover:underline">Modifier</a> |
+                    <a href="generation.html?course=${index}" class="text-blue-500 hover:underline">Consulter</a>
+                `;
+                generatedCoursesList.appendChild(li);
+            });
+        }
+    }
+
+    // Exporter le cours au format JSON
+    document.getElementById("export-course").addEventListener("click", () => {
+        const jsonData = JSON.stringify(generatedCourses, null, 2); // Convertir en JSON
+        const blob = new Blob([jsonData], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "cours.json"; // Nom du fichier
+        link.click();
+    });
+
+    // Importer un cours depuis un fichier JSON
+    document.getElementById("import-course").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file && file.type === "application/json") {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    generatedCourses = importedData;
+                    importFeedback.classList.remove("hidden");
+                    updateGeneratedCourses();
+                } catch (error) {
+                    alert("Erreur lors de l'importation du fichier JSON.");
+                }
+            };
+            reader.readAsText(file);
+        } else {
+            alert("Veuillez sélectionner un fichier JSON valide.");
+        }
+    });
+</script>
+
+</body>
+
+</html>

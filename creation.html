@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Création de Fiches de Révisions</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+
+<div class="container mx-auto my-10">
+    <h1 class="text-center text-3xl font-semibold mb-6">Création de Fiches de Révisions</h1>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <form id="revision-form">
+            <!-- Sélection du cours -->
+            <div class="mb-4">
+                <label for="course-select" class="block text-sm font-medium text-gray-700">Sélectionner un Cours</label>
+                <select id="course-select" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500">
+                    <option value="" disabled selected>Choisissez un cours</option>
+                    <!-- Exemple de cours à ajouter dynamiquement ou manuellement -->
+                    <option value="Introduction à la Programmation">Introduction à la Programmation</option>
+                    <option value="Algorithmie">Algorithmie</option>
+                    <option value="Bases de données">Bases de données</option>
+                </select>
+            </div>
+
+            <!-- Titre de la fiche -->
+            <div class="mb-4">
+                <label for="revision-title" class="block text-sm font-medium text-gray-700">Titre de la Fiche</label>
+                <input type="text" id="revision-title" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" placeholder="Exemple : Fiche révision - Introduction à la Programmation" required>
+            </div>
+
+            <!-- Résumé -->
+            <div class="mb-4">
+                <label for="revision-summary" class="block text-sm font-medium text-gray-700">Résumé du cours</label>
+                <textarea id="revision-summary" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" rows="4" placeholder="Exemple : Cette fiche résume les concepts de base de la programmation en C." required></textarea>
+            </div>
+
+            <!-- Mots-clés importants -->
+            <div class="mb-4">
+                <label for="keywords" class="block text-sm font-medium text-gray-700">Mots-clés importants</label>
+                <input type="text" id="keywords" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" placeholder="Exemple : Variables, Boucles, Fonction" required>
+                <small class="text-gray-500">Séparez les mots-clés par des virgules</small>
+            </div>
+
+            <!-- Commandes importantes (si applicable) -->
+            <div class="mb-4">
+                <label for="commands" class="block text-sm font-medium text-gray-700">Commandes importantes</label>
+                <textarea id="commands" class="w-full px-4 py-2 rounded-lg border-gray-300 focus:outline-none focus:border-blue-500" rows="4" placeholder="Exemple : printf(), scanf(), main()"></textarea>
+            </div>
+
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Créer la Fiche de Révision
+            </button>
+        </form>
+    </div>
+
+    <!-- Liste des fiches créées -->
+    <div class="mt-10">
+        <h2 class="text-xl font-semibold mb-4">Fiches de Révisions Créées</h2>
+        <ul id="revision-list" class="list-disc pl-5 space-y-2 bg-white shadow-md rounded-lg p-6">
+            <li class="text-gray-400">Aucune fiche créée pour le moment</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const revisionForm = document.getElementById("revision-form");
+    const revisionList = document.getElementById("revision-list");
+
+    let revisionSheets = [];
+
+    // Ajouter une fiche de révision
+    revisionForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const course = document.getElementById("course-select").value;
+        const title = document.getElementById("revision-title").value.trim();
+        const summary = document.getElementById("revision-summary").value.trim();
+        const keywords = document.getElementById("keywords").value.trim().split(",").map(keyword => keyword.trim());
+        const commands = document.getElementById("commands").value.trim();
+
+        if (!course || !title || !summary || keywords.length === 0) {
+            alert("Veuillez remplir tous les champs !");
+            return;
+        }
+
+        const revisionSheet = {
+            course,
+            title,
+            summary,
+            keywords,
+            commands
+        };
+
+        revisionSheets.push(revisionSheet);
+        updateRevisionList();
+        
+        // Réinitialiser le formulaire
+        revisionForm.reset();
+    });
+
+    // Mettre à jour la liste des fiches de révision
+    function updateRevisionList() {
+        revisionList.innerHTML = "";
+        if (revisionSheets.length === 0) {
+            revisionList.innerHTML = "<li class='text-gray-400'>Aucune fiche créée pour le moment</li>";
+        } else {
+            revisionSheets.forEach((sheet, index) => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <strong>${sheet.title}</strong> - ${sheet.course}
+                    <br>
+                    <em>Résumé :</em> ${sheet.summary}
+                    <br>
+                    <em>Mots-clés :</em> ${sheet.keywords.join(", ")}
+                    <br>
+                    <em>Commandes :</em> ${sheet.commands || "Aucune commande importante"}
+                    <br>
+                    <button class="text-blue-500 hover:underline mt-2" onclick="editRevision(${index})">Modifier</button> |
+                    <button class="text-red-500 hover:underline mt-2" onclick="deleteRevision(${index})">Supprimer</button>
+                `;
+                revisionList.appendChild(li);
+            });
+        }
+    }
+
+    // Modifier une fiche de révision
+    function editRevision(index) {
+        const sheet = revisionSheets[index];
+        document.getElementById("course-select").value = sheet.course;
+        document.getElementById("revision-title").value = sheet.title;
+        document.getElementById("revision-summary").value = sheet.summary;
+        document.getElementById("keywords").value = sheet.keywords.join(", ");
+        document.getElementById("commands").value = sheet.commands;
+
+        // Supprimer l'ancienne fiche pour éviter les doublons
+        revisionSheets.splice(index, 1);
+        updateRevisionList();
+    }
+
+    // Supprimer une fiche de révision
+    function deleteRevision(index) {
+        if (confirm("Voulez-vous vraiment supprimer cette fiche ?")) {
+            revisionSheets.splice(index, 1);
+            updateRevisionList();
+        }
+    }
+</script>
+
+</body>
+
+</html>
